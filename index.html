@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Feliz Cumpleaños Kaliu</title>
+    <style>
+        /* Estilos Globales y Fondo con el Mapa de Summit (Lotus) al inicio */
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-image: url('multimedia/Summit_Map_Valorant.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            position: relative;
+            transition: background-image 1s ease;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: none; /* Evita zoom y scrolls nativos del tlf al jugar */
+        }
+
+        /* Cambia al fondo de Sage al terminar el juego */
+        body.show-birthday-bg {
+            background-image: url('multimedia/25764223.jpg');
+            background-position: center center;
+        }
+
+        /* Ocultar el cursor por defecto en PC, en móvil se controla por touch */
+        body, #gameContainer {
+            cursor: none !important;
+        }
+
+        /* Capa protectora oscura */
+        .dark-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(13, 13, 17, 0.25); 
+            z-index: 1;
+            transition: background 1s ease;
+            pointer-events: none;
+        }
+
+        .dark-overlay.game-over {
+            background: rgba(13, 13, 17, 0.65); 
+        }
+
+        /* --- RESPLANDOR CENTRAL DEL FONDO --- */
+        .bg-glow {
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70vw;
+            height: 70vw;
+            max-width: 500px;
+            max-height: 500px;
+            background: radial-gradient(circle, rgba(0, 240, 255, 0.4) 0%, rgba(51, 204, 255, 0.15) 45%, rgba(0, 0, 0, 0) 70%);
+            filter: blur(30px);
+            z-index: 2;
+            pointer-events: none;
+            opacity: 0;
+            display: none;
+            transition: opacity 1s ease;
+        }
+
+        .show-glow .bg-glow {
+            display: block;
+            opacity: 1;
+            animation: background-pulse 4s infinite ease-in-out;
+        }
+
+        @keyframes background-pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+            50% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+        }
+
+        /* --- MIRA PERSONALIZADA --- */
+        #customCursor {
+            position: fixed;
+            width: 65px;
+            height: 65px;
+            pointer-events: none; 
+            z-index: 9999;
+            transform: translate(-50%, -50%); 
+            left: -100px;
+            top: -100px;
+            animation: cursor-heartbeat 1.2s infinite ease-in-out;
+            display: block;
+        }
+
+        @keyframes cursor-heartbeat {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); filter: drop-shadow(0 0 6px #00f0ff); }
+            50% { transform: translate(-50%, -50%) scale(1.15); filter: drop-shadow(0 0 20px #00ffff); }
+        }
+
+        /* --- JUEGO DE CURACIÓN --- */
+        #gameContainer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 30;
+        }
+
+        #scoreBoard {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #fff;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: rgba(13, 23, 30, 0.9);
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid #00f0ff;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+            text-shadow: 0 0 8px #00f0ff;
+            pointer-events: none;
+            text-align: center;
+            width: 75%;
+            max-width: 280px;
+        }
+
+        /* Contenedor del personaje y barra de vida */
+        .patient-container {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100px;
+            pointer-events: auto;
+            user-select: none;
+            -webkit-user-select: none;
+            animation: spawnIn 0.2s ease-out;
+        }
+
+        @keyframes spawnIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Barra de Vida */
+        .health-bar-bg {
+            width: 80px;
+            height: 8px;
+            background: #222;
+            border: 1px solid #445;
+            border-radius: 4px;
+            margin-bottom: 6px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.7);
+        }
+
+        .health-bar-fill {
+            width: 100%;
+            height: 100%;
+            background: #ff4747;
+            transition: width 0.1s linear;
+        }
+
+        .patient-img {
+            width: 100%;
+            height: auto;
+            pointer-events: none;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));
+            transition: filter 0.2s ease;
+        }
+
+        .patient-container.healed .health-bar-fill {
+            background: #00ffcc !important;
+            box-shadow: 0 0 8px #00ffcc;
+        }
+
+        .patient-container.healed .patient-img {
+            filter: drop-shadow(0 0 18px #00ffcc) brightness(1.25);
+        }
+
+        /* --- CONTENEDOR DE LA INTERFAZ POST-JUEGO --- */
+        .ui-container {
+            text-align: center;
+            z-index: 20; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            width: 94%;
+            max-width: 580px;
+        }
+
+        /* --- ESFERA DE PIXEL ART CON EFECTO DE LATIDO NEÓN --- */
+        .dvd-orb {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            z-index: 5; 
+            display: none;
+            animation: orb-neon-pulse 1.4s infinite ease-in-out;
+        }
+
+        @keyframes orb-neon-pulse {
+            0%, 100% {
+                transform: scale(1);
+                filter: drop-shadow(0 0 8px #00f0ff) drop-shadow(0 0 20px rgba(0, 240, 255, 0.5)) brightness(1);
+            }
+            50% {
+                transform: scale(1.12);
+                filter: drop-shadow(0 0 22px #00ffff) drop-shadow(0 0 40px rgba(0, 255, 255, 0.9)) brightness(1.3);
+            }
+        }
+
+        /* --- CONTENEDOR DE MENSAJE (SIN CUADRO OSCURO NI BORDES) --- */
+        .message-container {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            opacity: 0;
+            display: none;
+            transition: opacity 0.5s ease;
+            overflow: hidden;
+        }
+
+        .message {
+            color: #fff;
+            font-size: 1.25rem;
+            line-height: 1.6;
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.85); /* Sombra para legibilidad sobre el fondo */
+        }
+
+        /* --- TÍTULO CON TRANSICIÓN DE OPACIDAD (0 A 100%) --- */
+        .custom-title {
+            display: inline-block;
+            vertical-align: middle;
+            width: 100%;
+            font-size: 5.2vw;
+            line-height: 1.3;
+            padding: 6px 0;
+            margin-bottom: 22px;
+            color: #000000;
+            text-align: center;
+            white-space: nowrap;
+            opacity: 0; /* Empieza totalmente invisible */
+            
+            /* Bordeado fuerte y resplandor neón rosado claro */
+            text-shadow: 
+                -1.5px -1.5px 0 #ffb6c1,  
+                 1.5px -1.5px 0 #ffb6c1,
+                -1.5px  1.5px 0 #ffb6c1,
+                 1.5px  1.5px 0 #ffb6c1,
+                 0 0 10px rgba(255, 182, 193, 0.85),
+                 0 0 22px rgba(255, 182, 193, 0.6);
+        }
+
+        /* Clase que se añade desde JavaScript para activar la transición */
+        .custom-title.animate-fade {
+            animation: fadeInTitle 1.5s ease forwards;
+        }
+
+        @keyframes fadeInTitle {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        /* --- LLUVIA INFINITA DE SKINS --- */
+        .skin-drop {
+            position: absolute;
+            top: 0; 
+            z-index: 25; 
+            pointer-events: none;
+            user-select: none;
+            opacity: 0.95;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6));
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(-150px) rotate(0deg); }
+            100% { transform: translateY(105vh) rotate(360deg); }
+        }
+
+        /* --- AJUSTES EXCLUSIVOS MÓVIL --- */
+        @media (max-width: 600px) {
+            .patient-container {
+                width: 80px;
+            }
+            .health-bar-bg {
+                width: 65px;
+                height: 6px;
+            }
+            .custom-title {
+                font-size: 4.5vw;
+                padding: 4px 0;
+            }
+            .message {
+                font-size: 1.05rem;
+            }
+            .dvd-orb {
+                width: 90px;
+                height: 90px;
+            }
+            #customCursor {
+                width: 50px;
+                height: 50px;
+            }
+        }
+
+        /* Ajuste para pantallas grandes (PC) */
+        @media (min-width: 601px) {
+            .custom-title {
+                font-size: 1.95rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dark-overlay" id="bgOverlay"></div>
+    <div class="bg-glow"></div>
+
+    <img src="multimedia/8qevhs5h85u41-removebg-preview.png" id="customCursor" alt="Cursor Orbe">
+
+    <div id="gameContainer">
+        <div id="scoreBoard">
+            <div>¡Cura a tus aliados!</div>
+            <div style="font-size: 0.95rem; margin-top: 4px; color: #00ffcc;">Aliados salvados: <span id="score">0</span>/5</div>
+        </div>
+    </div>
+
+    <div class="ui-container">
+        <div class="message-container" id="messageContainer">
+            <div class="custom-title" id="birthdayTitle">˖♡˖ 𝓕𝓮𝓵𝓲𝔃 𝓬𝓾𝓶𝓹𝓵𝓮𝓪𝓷̃𝓸𝓼 𝓚𝓪𝓵𝓲𝓾𝓾  ˖♡˖</div>
+            <p class="message" id="typewriterMessage"></p>
+        </div>
+    </div>
+
+    <img src="multimedia/8qevhs5h85u41-removebg-preview.png" class="dvd-orb" id="bouncingOrb" alt="Orbe de Sage">
+
+    <script>
+        const gameContainer = document.getElementById('gameContainer');
+        const scoreDisplay = document.getElementById('score');
+        const messageContainer = document.getElementById('messageContainer');
+        const birthdayTitle = document.getElementById('birthdayTitle');
+        const typewriterMessage = document.getElementById('typewriterMessage');
+        const bouncingOrb = document.getElementById('bouncingOrb');
+        const customCursor = document.getElementById('customCursor');
+        const bgOverlay = document.getElementById('bgOverlay');
+        
+        const fullMessage = "Te quiero mucho se que no lo demuestro mucho con mi manera de actuar y que últimamente no he sido el mejor amigo que tu te mereces pero quiero que sepas que siempre estoy pendiente de ti y si me necesitas estaré ahí , te deseo lo mejor kati y que hoy sea un dia muy feliz para ti , aparte que sea tranquilo y alegre como te gusta te quiero mucho mucho no me cansare de decirlo ";
+        
+        // Manejo del Movimiento de la Mira (PC y Móvil)
+        window.addEventListener('mousemove', (e) => {
+            customCursor.style.left = e.clientX + 'px';
+            customCursor.style.top = e.clientY + 'px';
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            if(e.touches.length > 0) {
+                customCursor.style.left = e.touches[0].clientX + 'px';
+                customCursor.style.top = e.touches[0].clientY + 'px';
+            }
+        }, { passive: true });
+
+        window.addEventListener('touchstart', (e) => {
+            if(e.touches.length > 0) {
+                customCursor.style.left = e.touches[0].clientX + 'px';
+                customCursor.style.top = e.touches[0].clientY + 'px';
+            }
+        }, { passive: true });
+
+        const targetImages = [
+            'multimedia/enoiz019r2t41-removebg-preview.png',
+            'multimedia/images-removebg-preview (1).png',
+            'multimedia/images-removebg-preview.png',
+            'multimedia/Jett_artwork-removebg-preview.png'
+        ];
+
+        const skinImages = [
+            'multimedia/Adsız-removebg-preview.png',
+            'multimedia/FD2F03BD-4DE4-653B-A33A-46800191601C.png',
+            'multimedia/Oni-mejores-skins-de-valorant-1030x579-removebg-preview.png',
+            'multimedia/Prime-2.0-mejores-skins-de-valorant-removebg-preview.png',
+            'multimedia/Spectrum-mejores-skins-de-valorant-removebg-preview.png',
+            'multimedia/valorant-prime-classic-weapon-skin-removebg-preview.png'
+        ];
+
+        let score = 0;
+        let currentPatient = null;
+        let gameActive = true;
+        let healthInterval = null;
+        let lifePercent = 100;
+
+        spawnPatient();
+
+        function spawnPatient() {
+            if (!gameActive) return;
+
+            if (score >= 5) {
+                endGameAndUnlock();
+                return;
+            }
+
+            if (currentPatient) {
+                currentPatient.remove();
+            }
+            clearInterval(healthInterval);
+
+            const container = document.createElement('div');
+            container.classList.add('patient-container');
+
+            const barBg = document.createElement('div');
+            barBg.classList.add('health-bar-bg');
+            const barFill = document.createElement('div');
+            barFill.classList.add('health-bar-fill');
+            barBg.appendChild(barFill);
+
+            const img = document.createElement('img');
+            img.src = targetImages[Math.floor(Math.random() * targetImages.length)];
+            img.classList.add('patient-img');
+
+            container.appendChild(barBg);
+            container.appendChild(img);
+
+            // Ajuste de márgenes seguros para tlf vertical
+            const isMobile = window.innerWidth <= 600;
+            const elementWidth = isMobile ? 80 : 100;
+            
+            const minX = 20;
+            const maxX = window.innerWidth - elementWidth - 20;
+            const minY = 120; 
+            const maxY = window.innerHeight - 150;
+
+            const randomX = Math.random() * (maxX - minX) + minX;
+            const randomY = Math.random() * (maxY - minY) + minY;
+
+            container.style.left = randomX + 'px';
+            container.style.top = randomY + 'px';
+
+            lifePercent = 100;
+            let isHealed = false;
+
+            function healTarget() {
+                if (isHealed) return;
+                isHealed = true;
+                
+                score++;
+                scoreDisplay.textContent = score;
+                
+                barFill.style.width = '100%';
+                container.classList.add('healed');
+                clearInterval(healthInterval);
+
+                setTimeout(() => {
+                    spawnPatient();
+                }, 350);
+            }
+
+            container.addEventListener('mousedown', healTarget);
+            container.addEventListener('touchstart', (e) => {
+                e.preventDefault(); 
+                healTarget();
+            }, { passive: false });
+
+            gameContainer.appendChild(container);
+            currentPatient = container;
+
+            healthInterval = setInterval(() => {
+                lifePercent -= 4;
+                if (lifePercent <= 0) {
+                    lifePercent = 0;
+                    barFill.style.width = '0%';
+                    clearInterval(healthInterval);
+                    setTimeout(spawnPatient, 300);
+                } else {
+                    barFill.style.width = lifePercent + '%';
+                }
+            }, 90);
+        }
+
+        function endGameAndUnlock() {
+            gameActive = false;
+            clearInterval(healthInterval);
+            if (currentPatient) currentPatient.remove();
+            
+            customCursor.remove();
+            document.body.style.cursor = 'default';
+
+            gameContainer.style.transition = 'opacity 0.5s ease';
+            gameContainer.style.opacity = '0';
+            setTimeout(() => gameContainer.remove(), 500);
+
+            document.body.classList.add('show-birthday-bg');
+            bgOverlay.classList.add('game-over');
+            document.body.classList.add('show-glow');
+
+            setTimeout(() => {
+                messageContainer.style.display = 'block';
+                setTimeout(() => {
+                    messageContainer.style.opacity = '1';
+                    // Activa la transición de opacidad del título de 0 a 100%
+                    birthdayTitle.classList.add('animate-fade');
+                }, 50);
+                
+                // Espera a que termine la transición de opacidad del título para empezar la máquina de escribir
+                setTimeout(() => {
+                    typeWriter(fullMessage, typewriterMessage);
+                }, 1500);
+            }, 500);
+
+            bouncingOrb.style.display = 'block';
+            initDvdAnimation();
+            startInfiniteSkinRain();
+        }
+
+        // --- MOVIMIENTO DVD DEL ORBE ---
+        let orbSize = window.innerWidth <= 600 ? 90 : 120;
+        let posX = Math.random() * (window.innerWidth - orbSize);
+        let posY = Math.random() * (window.innerHeight - orbSize);
+        let speedX = window.innerWidth <= 600 ? 2 : 3;
+        let speedY = window.innerWidth <= 600 ? 2 : 3;
+
+        function initDvdAnimation() {
+            function move() {
+                orbSize = window.innerWidth <= 600 ? 90 : 120;
+                posX += speedX;
+                posY += speedY;
+
+                if (posX <= 0 || posX + orbSize >= window.innerWidth) speedX = -speedX;
+                if (posY <= 0 || posY + orbSize >= window.innerHeight) speedY = -speedY;
+
+                bouncingOrb.style.left = posX + 'px';
+                bouncingOrb.style.top = posY + 'px';
+
+                requestAnimationFrame(move);
+            }
+            move();
+        }
+
+        window.addEventListener('resize', () => {
+            orbSize = window.innerWidth <= 600 ? 90 : 120;
+            if (posX + orbSize > window.innerWidth) posX = window.innerWidth - orbSize;
+            if (posY + orbSize > window.innerHeight) posY = window.innerHeight - orbSize;
+        });
+
+        // --- EFECTO MÁQUINA DE ESCRIBIR ---
+        function typeWriter(text, element) {
+            let i = 0;
+            element.innerHTML = "";
+            function type() {
+                if (i < text.length) {
+                    if (text.charAt(i) === '<') {
+                        let closingBracket = text.indexOf('>', i);
+                        element.innerHTML += text.substring(i, closingBracket + 1);
+                        i = closingBracket + 1;
+                    } else {
+                        element.innerHTML += text.charAt(i);
+                        i++;
+                    }
+                    setTimeout(type, 45);
+                }
+            }
+            type();
+        }
+
+        // --- LLUVIA INFINITA DE SKINS ---
+        function startInfiniteSkinRain() {
+            setInterval(() => {
+                const skin = document.createElement('img');
+                skin.src = skinImages[Math.floor(Math.random() * skinImages.length)];
+                skin.classList.add('skin-drop');
+
+                const isMobile = window.innerWidth <= 600;
+                const randomWidth = isMobile ? (Math.random() * 20 + 45) : (Math.random() * 40 + 65); 
+                
+                skin.style.width = randomWidth + 'px';
+                skin.style.height = 'auto';
+                skin.style.left = Math.random() * 90 + 'vw';
+
+                const duration = isMobile ? (Math.random() * 2 + 3) : (Math.random() * 3 + 3.5);
+                skin.style.animation = `fall ${duration}s linear forwards`;
+
+                document.body.appendChild(skin);
+                setTimeout(() => skin.remove(), duration * 1000);
+            }, window.innerWidth <= 600 ? 380 : 250);
+        }
+    </script>
+</body>
+</html>
