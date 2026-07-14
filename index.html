@@ -31,8 +31,8 @@
             background-position: center center;
         }
 
-        /* Ocultar el cursor por defecto en PC, en móvil se controla por touch */
-        body, #gameContainer {
+        /* Ocultar el cursor por defecto solo durante el juego */
+        body.game-active, body.game-active #gameContainer {
             cursor: none !important;
         }
 
@@ -94,12 +94,33 @@
             left: -100px;
             top: -100px;
             animation: cursor-heartbeat 1.2s infinite ease-in-out;
-            display: block;
+            display: none; /* oculto durante el juego; se muestra en la escena de cumpleaños */
         }
 
         @keyframes cursor-heartbeat {
             0%, 100% { transform: translate(-50%, -50%) scale(1); filter: drop-shadow(0 0 6px #00f0ff); }
             50% { transform: translate(-50%, -50%) scale(1.15); filter: drop-shadow(0 0 20px #00ffff); }
+        }
+
+        /* Animación breve para el cursor al hacer clic en la escena de cumpleaños */
+        .cursor-click-animate {
+            animation: cursor-move 0.6s ease forwards;
+        }
+
+        /* Animación idle especial para la escena de cumpleaños */
+        .birthday-cursor {
+            animation: cursor-birthday-idle 1.2s infinite ease-in-out;
+        }
+
+        @keyframes cursor-move {
+            0% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+            40% { transform: translate(-50%, -65%) scale(1.15) rotate(-8deg); }
+            100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+        }
+
+        @keyframes cursor-birthday-idle {
+            0%,100% { transform: translate(-50%, -50%) scale(1); filter: drop-shadow(0 0 6px #ffb6c1); }
+            50% { transform: translate(-50%, -50%) scale(1.08); filter: drop-shadow(0 0 18px #ffb6c1); }
         }
 
         /* --- JUEGO DE CURACIÓN --- */
@@ -331,6 +352,59 @@
                 font-size: 1.95rem;
             }
         }
+
+        /* --- SIGNATURE (corner image + neon caption) --- */
+        .signature {
+            position: fixed;
+            right: 18px;
+            bottom: 18px;
+            width: 110px;
+            z-index: 60;
+            display: none; /* shown only in birthday scene */
+            text-align: center;
+            pointer-events: none;
+            transform-origin: bottom right;
+        }
+        .signature-img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+            display: block;
+        }
+        .signature-caption {
+            margin-top: 6px;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            color: #000; /* texto negro */
+            /* Contorno neon en color B02CB0 usando sombras en varias direcciones + resplandor */
+            text-shadow:
+                -1px -1px 0 #B02CB0,
+                 1px -1px 0 #B02CB0,
+                -1px  1px 0 #B02CB0,
+                 1px  1px 0 #B02CB0,
+                 0 0 6px rgba(176,44,176,0.95),
+                 0 0 14px rgba(176,44,176,0.65),
+                 0 0 28px rgba(176,44,176,0.35);
+            filter: drop-shadow(0 0 10px rgba(176,44,176,0.5));
+            pointer-events: none;
+            animation: neon-pulse 2.2s infinite ease-in-out;
+        }
+        .show-signature .signature {
+            display: block;
+            animation: signature-fade-in 0.8s ease forwards;
+        }
+        @keyframes signature-fade-in {
+            from { opacity: 0; transform: translateY(10px) scale(0.98); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes neon-pulse {
+            0% { text-shadow: 0 0 6px rgba(176,44,176,0.6), 0 0 12px rgba(176,44,176,0.35); }
+            50% { text-shadow: 0 0 12px rgba(176,44,176,1), 0 0 28px rgba(176,44,176,0.6); }
+            100% { text-shadow: 0 0 6px rgba(176,44,176,0.6), 0 0 12px rgba(176,44,176,0.35); }
+        }
+
     </style>
 </head>
 <body>
@@ -356,6 +430,12 @@
 
     <img src="multimedia/8qevhs5h85u41-removebg-preview.png" class="dvd-orb" id="bouncingOrb" alt="Orbe de Sage">
 
+    <!-- Signature: small image with neon caption shown in birthday scene -->
+    <div class="signature" id="signature">
+        <img src="multimedia/signature.gif" alt="signature" class="signature-img">
+        <div class="signature-caption">𝕯𝖆𝖓𝖝𝖊𝖗𝖘</div>
+    </div>
+
     <script>
         const gameContainer = document.getElementById('gameContainer');
         const scoreDisplay = document.getElementById('score');
@@ -366,7 +446,48 @@
         const customCursor = document.getElementById('customCursor');
         const bgOverlay = document.getElementById('bgOverlay');
         
-        const fullMessage = "Te quiero mucho se que no lo demuestro mucho con mi manera de actuar y que últimamente no he sido el mejor amigo que tu te mereces pero quiero que sepas que siempre estoy pendiente de ti y si me necesitas estaré ahí , te deseo lo mejor kati y que hoy sea un dia muy feliz para ti , aparte que sea tranquilo y alegre como te gusta te quiero mucho mucho no me cansare de decirlo ";
+        // Imágenes de cursor para la escena de cumpleaños (copiadas a multimedia/cursor1.png y cursor2.png)
+        const cursorImg1 = 'multimedia/cursor1.png';
+        const cursorImg2 = 'multimedia/cursor2.png';
+        
+        // Sonidos para cada curación: 1..5 (preload)
+        const healSoundFiles = [
+            'multimedia/reaverkill1.mp3',
+            'multimedia/reaverkill2.mp3',
+            'multimedia/reaverkill3.mp3',
+            'multimedia/reaverkill4.mp3',
+            'multimedia/reaverkill5.mp3'
+        ];
+        const healAudio = healSoundFiles.map(src => { const a = new Audio(src); a.preload = 'auto'; return a; });
+        
+        // Sonido para clicks en la escena de cumpleaños (preload)
+        const birthdayClickFile = 'multimedia/sage_ultimate_click.mp3';
+        const birthdayAudio = new Audio(birthdayClickFile); birthdayAudio.preload = 'auto';
+        
+        // Canción de fondo para la escena de cumpleaños (preload, volumen 25%, loop)
+        const birthdayMusicFile = 'multimedia/sin_medias_tintas_aurozyz.mp3';
+        const birthdayMusic = new Audio(birthdayMusicFile);
+        birthdayMusic.preload = 'auto';
+        birthdayMusic.loop = true;
+        birthdayMusic.volume = 0.10; // 10% volume (reduced an extra 15%)
+        
+        // Minigame background music (loop at 5%)
+        const minigameMusicFile = 'multimedia/minigame_bg_theme.mp3';
+        const minigameMusic = new Audio(minigameMusicFile);
+        minigameMusic.preload = 'auto';
+        minigameMusic.loop = true;
+        minigameMusic.volume = 0.05; // 5% volume
+        // Try to play minigame music now (may be blocked by autoplay policies)
+        try { minigameMusic.currentTime = 0; minigameMusic.play(); } catch (e) { /* autoplay might be blocked */ }
+        
+        // Marcar que el juego está activo para ocultar el cursor del sistema durante el juego
+        document.body.classList.add('game-active');
+        // Mostrar el cursor personalizado durante el mini-juego con su animación original
+        customCursor.style.display = 'block';
+        // Asegurar que use la imagen por defecto del HTML mientras se juega
+        customCursor.src = customCursor.src || 'multimedia/8qevhs5h85u41-removebg-preview.png';
+        
+        const fullMessage = "Te quiero muchísimo, Kati. Sé que a veces no lo demuestro de la mejor manera con mis actos y que últimamente no he sido el amigo que tanto te mereces, pero quiero que tengas por seguro que siempre, cada día, estás en mis pensamientos. Si me necesitas, ahí estaré para ti, sin dudarlo. Deseo con todo mi corazón que hoy tengas un día hermoso, lleno de esa paz, tranquilidad y alegría que tanto te gustan. Te quiero un montón, de verdad, y nunca me voy a cansar de decírtelo. Que pases un día maravilloso";
         
         // Manejo del Movimiento de la Mira (PC y Móvil)
         window.addEventListener('mousemove', (e) => {
@@ -465,6 +586,10 @@
                 
                 score++;
                 scoreDisplay.textContent = score;
+                // reproducir sonido correspondiente al número de curados (1..5)
+                if (score >= 1 && score <= healAudio.length) {
+                    try { healAudio[score - 1].currentTime = 0; healAudio[score - 1].play(); } catch (e) { /* Ignorar errores de reproducción */ }
+                }
                 
                 barFill.style.width = '100%';
                 container.classList.add('healed');
@@ -502,8 +627,36 @@
             clearInterval(healthInterval);
             if (currentPatient) currentPatient.remove();
             
-            customCursor.remove();
-            document.body.style.cursor = 'default';
+            // Mostrar el cursor personalizado para la escena de cumpleaños y configurar su comportamiento
+            document.body.classList.remove('game-active');
+            // ocultar cursor del sistema para que se vea solo el cursor personalizado
+            document.body.style.cursor = 'none';
+            customCursor.style.display = 'block';
+            // Pausar minigame music when entering birthday scene
+            try { minigameMusic.pause(); minigameMusic.currentTime = 0; } catch (e) { /* ignore */ }
+            // usar la primera imagen como cursor por defecto en la escena de cumpleaños
+            customCursor.src = cursorImg1;
+            // ajustar animación: usar la animación especial de cumpleaños
+            customCursor.classList.remove('game-cursor');
+            customCursor.classList.add('birthday-cursor');
+            // Manejar el clic/tap: cambiar a la segunda imagen y animar, luego volver a la primera
+            function onCursorAction() {
+                // cambiar imagen y aplicar animación de clic
+                customCursor.src = cursorImg2;
+                customCursor.classList.remove('cursor-click-animate');
+                // reflow para reiniciar la animación si se hace clic rápido
+                void customCursor.offsetWidth;
+                customCursor.classList.add('cursor-click-animate');
+                // reproducir el sonido de click de cumpleaños
+                try { birthdayAudio.currentTime = 0; birthdayAudio.play(); } catch (e) { /* ignorar si bloqueo Autoplay */ }
+                // volver a imagen 1 al finalizar la animación (seguridad con timeout)
+                setTimeout(() => {
+                    customCursor.src = cursorImg1;
+                    customCursor.classList.remove('cursor-click-animate');
+                }, 600);
+            }
+            document.addEventListener('click', onCursorAction);
+            document.addEventListener('touchstart', (e) => { onCursorAction(); }, { passive: true });
 
             gameContainer.style.transition = 'opacity 0.5s ease';
             gameContainer.style.opacity = '0';
@@ -512,6 +665,9 @@
             document.body.classList.add('show-birthday-bg');
             bgOverlay.classList.add('game-over');
             document.body.classList.add('show-glow');
+            document.body.classList.add('show-signature');
+            // reproducir música de fondo de cumpleaños al 25% de volumen
+            try { birthdayMusic.currentTime = 0; birthdayMusic.play(); } catch (e) { /* autoplay puede bloquearse en algunos navegadores */ }
 
             setTimeout(() => {
                 messageContainer.style.display = 'block';
