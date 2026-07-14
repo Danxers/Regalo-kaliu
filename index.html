@@ -401,6 +401,10 @@
         ];
         const healAudio = healSoundFiles.map(src => { const a = new Audio(src); a.preload = 'auto'; return a; });
         
+        // Sonido para clicks en la escena de cumpleaños (preload)
+        const birthdayClickFile = 'multimedia/sage_ultimate_click.mp3';
+        const birthdayAudio = new Audio(birthdayClickFile); birthdayAudio.preload = 'auto';
+        
         // Marcar que el juego está activo para ocultar el cursor del sistema durante el juego
         document.body.classList.add('game-active');
         // Mostrar el cursor personalizado durante el mini-juego con su animación original
@@ -566,6 +570,8 @@
                 // reflow para reiniciar la animación si se hace clic rápido
                 void customCursor.offsetWidth;
                 customCursor.classList.add('cursor-click-animate');
+                // reproducir el sonido de click de cumpleaños
+                try { birthdayAudio.currentTime = 0; birthdayAudio.play(); } catch (e) { /* ignorar si bloqueo Autoplay */ }
                 // volver a imagen 1 al finalizar la animación (seguridad con timeout)
                 setTimeout(() => {
                     customCursor.src = cursorImg1;
