@@ -471,6 +471,15 @@
         birthdayMusic.loop = true;
         birthdayMusic.volume = 0.10; // 10% volume (reduced an extra 15%)
         
+        // Minigame background music (loop at 5%)
+        const minigameMusicFile = 'multimedia/minigame_bg_theme.mp3';
+        const minigameMusic = new Audio(minigameMusicFile);
+        minigameMusic.preload = 'auto';
+        minigameMusic.loop = true;
+        minigameMusic.volume = 0.05; // 5% volume
+        // Try to play minigame music now (may be blocked by autoplay policies)
+        try { minigameMusic.currentTime = 0; minigameMusic.play(); } catch (e) { /* autoplay might be blocked */ }
+        
         // Marcar que el juego está activo para ocultar el cursor del sistema durante el juego
         document.body.classList.add('game-active');
         // Mostrar el cursor personalizado durante el mini-juego con su animación original
@@ -623,6 +632,8 @@
             // ocultar cursor del sistema para que se vea solo el cursor personalizado
             document.body.style.cursor = 'none';
             customCursor.style.display = 'block';
+            // Pausar minigame music when entering birthday scene
+            try { minigameMusic.pause(); minigameMusic.currentTime = 0; } catch (e) { /* ignore */ }
             // usar la primera imagen como cursor por defecto en la escena de cumpleaños
             customCursor.src = cursorImg1;
             // ajustar animación: usar la animación especial de cumpleaños
