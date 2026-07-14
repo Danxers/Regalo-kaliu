@@ -464,6 +464,13 @@
         const birthdayClickFile = 'multimedia/sage_ultimate_click.mp3';
         const birthdayAudio = new Audio(birthdayClickFile); birthdayAudio.preload = 'auto';
         
+        // Canción de fondo para la escena de cumpleaños (preload, volumen 25%, loop)
+        const birthdayMusicFile = 'multimedia/sin_medias_tintas_aurozyz.mp3';
+        const birthdayMusic = new Audio(birthdayMusicFile);
+        birthdayMusic.preload = 'auto';
+        birthdayMusic.loop = true;
+        birthdayMusic.volume = 0.25; // 25% volume
+        
         // Marcar que el juego está activo para ocultar el cursor del sistema durante el juego
         document.body.classList.add('game-active');
         // Mostrar el cursor personalizado durante el mini-juego con su animación original
@@ -648,6 +655,8 @@
             bgOverlay.classList.add('game-over');
             document.body.classList.add('show-glow');
             document.body.classList.add('show-signature');
+            // reproducir música de fondo de cumpleaños al 25% de volumen
+            try { birthdayMusic.currentTime = 0; birthdayMusic.play(); } catch (e) { /* autoplay puede bloquearse en algunos navegadores */ }
 
             setTimeout(() => {
                 messageContainer.style.display = 'block';
