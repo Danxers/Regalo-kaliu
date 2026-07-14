@@ -352,6 +352,51 @@
                 font-size: 1.95rem;
             }
         }
+
+        /* --- SIGNATURE (corner image + neon caption) --- */
+        .signature {
+            position: fixed;
+            right: 18px;
+            bottom: 18px;
+            width: 110px;
+            z-index: 60;
+            display: none; /* shown only in birthday scene */
+            text-align: center;
+            pointer-events: none;
+            transform-origin: bottom right;
+        }
+        .signature-img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+            display: block;
+        }
+        .signature-caption {
+            margin-top: 6px;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            color: #B02CB0; /* neon color */
+            text-shadow: 0 0 6px rgba(176,44,176,0.95), 0 0 14px rgba(176,44,176,0.65), 0 0 28px rgba(176,44,176,0.35);
+            filter: drop-shadow(0 0 10px rgba(176,44,176,0.5));
+            pointer-events: none;
+            animation: neon-pulse 2.2s infinite ease-in-out;
+        }
+        .show-signature .signature {
+            display: block;
+            animation: signature-fade-in 0.8s ease forwards;
+        }
+        @keyframes signature-fade-in {
+            from { opacity: 0; transform: translateY(10px) scale(0.98); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes neon-pulse {
+            0% { text-shadow: 0 0 6px rgba(176,44,176,0.6), 0 0 12px rgba(176,44,176,0.35); }
+            50% { text-shadow: 0 0 12px rgba(176,44,176,1), 0 0 28px rgba(176,44,176,0.6); }
+            100% { text-shadow: 0 0 6px rgba(176,44,176,0.6), 0 0 12px rgba(176,44,176,0.35); }
+        }
+
     </style>
 </head>
 <body>
@@ -376,6 +421,12 @@
     </div>
 
     <img src="multimedia/8qevhs5h85u41-removebg-preview.png" class="dvd-orb" id="bouncingOrb" alt="Orbe de Sage">
+
+    <!-- Signature: small image with neon caption shown in birthday scene -->
+    <div class="signature" id="signature">
+        <img src="multimedia/signature.gif" alt="signature" class="signature-img">
+        <div class="signature-caption">𝕯𝖆𝖓𝖝𝖊𝖗𝖘</div>
+    </div>
 
     <script>
         const gameContainer = document.getElementById('gameContainer');
@@ -588,6 +639,7 @@
             document.body.classList.add('show-birthday-bg');
             bgOverlay.classList.add('game-over');
             document.body.classList.add('show-glow');
+            document.body.classList.add('show-signature');
 
             setTimeout(() => {
                 messageContainer.style.display = 'block';
