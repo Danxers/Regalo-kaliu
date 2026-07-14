@@ -377,8 +377,16 @@
             font-family: 'Segoe UI', Tahoma, sans-serif;
             font-size: 14px;
             font-weight: 700;
-            color: #B02CB0; /* neon color */
-            text-shadow: 0 0 6px rgba(176,44,176,0.95), 0 0 14px rgba(176,44,176,0.65), 0 0 28px rgba(176,44,176,0.35);
+            color: #000; /* texto negro */
+            /* Contorno neon en color B02CB0 usando sombras en varias direcciones + resplandor */
+            text-shadow:
+                -1px -1px 0 #B02CB0,
+                 1px -1px 0 #B02CB0,
+                -1px  1px 0 #B02CB0,
+                 1px  1px 0 #B02CB0,
+                 0 0 6px rgba(176,44,176,0.95),
+                 0 0 14px rgba(176,44,176,0.65),
+                 0 0 28px rgba(176,44,176,0.35);
             filter: drop-shadow(0 0 10px rgba(176,44,176,0.5));
             pointer-events: none;
             animation: neon-pulse 2.2s infinite ease-in-out;
