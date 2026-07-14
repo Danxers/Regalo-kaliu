@@ -391,6 +391,16 @@
         const cursorImg1 = 'multimedia/cursor1.png';
         const cursorImg2 = 'multimedia/cursor2.png';
         
+        // Sonidos para cada curación: 1..5 (preload)
+        const healSoundFiles = [
+            'multimedia/reaverkill1.mp3',
+            'multimedia/reaverkill2.mp3',
+            'multimedia/reaverkill3.mp3',
+            'multimedia/reaverkill4.mp3',
+            'multimedia/reaverkill5.mp3'
+        ];
+        const healAudio = healSoundFiles.map(src => { const a = new Audio(src); a.preload = 'auto'; return a; });
+        
         // Marcar que el juego está activo para ocultar el cursor del sistema durante el juego
         document.body.classList.add('game-active');
         // Mostrar el cursor personalizado durante el mini-juego con su animación original
@@ -497,6 +507,10 @@
                 
                 score++;
                 scoreDisplay.textContent = score;
+                // reproducir sonido correspondiente al número de curados (1..5)
+                if (score >= 1 && score <= healAudio.length) {
+                    try { healAudio[score - 1].currentTime = 0; healAudio[score - 1].play(); } catch (e) { /* Ignorar errores de reproducción */ }
+                }
                 
                 barFill.style.width = '100%';
                 container.classList.add('healed');
