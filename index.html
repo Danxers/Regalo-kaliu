@@ -31,8 +31,8 @@
             background-position: center center;
         }
 
-        /* Ocultar el cursor por defecto en PC, en móvil se controla por touch */
-        body, #gameContainer {
+        /* Ocultar el cursor por defecto solo durante el juego */
+        body.game-active, body.game-active #gameContainer {
             cursor: none !important;
         }
 
@@ -94,12 +94,23 @@
             left: -100px;
             top: -100px;
             animation: cursor-heartbeat 1.2s infinite ease-in-out;
-            display: block;
+            display: none; /* oculto durante el juego; se muestra en la escena de cumpleaños */
         }
 
         @keyframes cursor-heartbeat {
             0%, 100% { transform: translate(-50%, -50%) scale(1); filter: drop-shadow(0 0 6px #00f0ff); }
             50% { transform: translate(-50%, -50%) scale(1.15); filter: drop-shadow(0 0 20px #00ffff); }
+        }
+
+        /* Animación breve para el cursor al hacer clic en la escena de cumpleaños */
+        .cursor-animate {
+            animation: cursor-move 0.6s ease forwards;
+        }
+
+        @keyframes cursor-move {
+            0% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+            40% { transform: translate(-50%, -65%) scale(1.15) rotate(-8deg); }
+            100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
         }
 
         /* --- JUEGO DE CURACIÓN --- */
@@ -366,6 +377,13 @@
         const customCursor = document.getElementById('customCursor');
         const bgOverlay = document.getElementById('bgOverlay');
         
+        // Imágenes de cursor para la escena de cumpleaños (copiadas a multimedia/cursor1.png y cursor2.png)
+        const cursorImg1 = 'multimedia/cursor1.png';
+        const cursorImg2 = 'multimedia/cursor2.png';
+        
+        // Marcar que el juego está activo para ocultar el cursor del sistema durante el juego
+        document.body.classList.add('game-active');
+        
         const fullMessage = "Te quiero mucho se que no lo demuestro mucho con mi manera de actuar y que últimamente no he sido el mejor amigo que tu te mereces pero quiero que sepas que siempre estoy pendiente de ti y si me necesitas estaré ahí , te deseo lo mejor kati y que hoy sea un dia muy feliz para ti , aparte que sea tranquilo y alegre como te gusta te quiero mucho mucho no me cansare de decirlo ";
         
         // Manejo del Movimiento de la Mira (PC y Móvil)
@@ -502,8 +520,29 @@
             clearInterval(healthInterval);
             if (currentPatient) currentPatient.remove();
             
-            customCursor.remove();
-            document.body.style.cursor = 'default';
+            // Mostrar el cursor personalizado para la escena de cumpleaños y configurar su comportamiento
+            document.body.classList.remove('game-active');
+            // ocultar cursor del sistema para que se vea solo el cursor personalizado
+            document.body.style.cursor = 'none';
+            customCursor.style.display = 'block';
+            // usar la primera imagen como cursor por defecto en la escena de cumpleaños
+            customCursor.src = cursorImg1;
+            // Manejar el clic/tap: cambiar a la segunda imagen y animar, luego volver a la primera
+            function onCursorAction() {
+                // cambiar imagen y aplicar animación
+                customCursor.src = cursorImg2;
+                customCursor.classList.remove('cursor-animate');
+                // reflow para reiniciar la animación si se hace clic rápido
+                void customCursor.offsetWidth;
+                customCursor.classList.add('cursor-animate');
+                // volver a imagen 1 al finalizar la animación (seguridad con timeout)
+                setTimeout(() => {
+                    customCursor.src = cursorImg1;
+                    customCursor.classList.remove('cursor-animate');
+                }, 600);
+            }
+            document.addEventListener('click', onCursorAction);
+            document.addEventListener('touchstart', (e) => { onCursorAction(); }, { passive: true });
 
             gameContainer.style.transition = 'opacity 0.5s ease';
             gameContainer.style.opacity = '0';
