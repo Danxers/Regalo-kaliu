@@ -103,14 +103,24 @@
         }
 
         /* Animación breve para el cursor al hacer clic en la escena de cumpleaños */
-        .cursor-animate {
+        .cursor-click-animate {
             animation: cursor-move 0.6s ease forwards;
+        }
+
+        /* Animación idle especial para la escena de cumpleaños */
+        .birthday-cursor {
+            animation: cursor-birthday-idle 1.2s infinite ease-in-out;
         }
 
         @keyframes cursor-move {
             0% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
             40% { transform: translate(-50%, -65%) scale(1.15) rotate(-8deg); }
             100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+        }
+
+        @keyframes cursor-birthday-idle {
+            0%,100% { transform: translate(-50%, -50%) scale(1); filter: drop-shadow(0 0 6px #ffb6c1); }
+            50% { transform: translate(-50%, -50%) scale(1.08); filter: drop-shadow(0 0 18px #ffb6c1); }
         }
 
         /* --- JUEGO DE CURACIÓN --- */
@@ -383,6 +393,10 @@
         
         // Marcar que el juego está activo para ocultar el cursor del sistema durante el juego
         document.body.classList.add('game-active');
+        // Mostrar el cursor personalizado durante el mini-juego con su animación original
+        customCursor.style.display = 'block';
+        // Asegurar que use la imagen por defecto del HTML mientras se juega
+        customCursor.src = customCursor.src || 'multimedia/8qevhs5h85u41-removebg-preview.png';
         
         const fullMessage = "Te quiero mucho se que no lo demuestro mucho con mi manera de actuar y que últimamente no he sido el mejor amigo que tu te mereces pero quiero que sepas que siempre estoy pendiente de ti y si me necesitas estaré ahí , te deseo lo mejor kati y que hoy sea un dia muy feliz para ti , aparte que sea tranquilo y alegre como te gusta te quiero mucho mucho no me cansare de decirlo ";
         
@@ -527,18 +541,21 @@
             customCursor.style.display = 'block';
             // usar la primera imagen como cursor por defecto en la escena de cumpleaños
             customCursor.src = cursorImg1;
+            // ajustar animación: usar la animación especial de cumpleaños
+            customCursor.classList.remove('game-cursor');
+            customCursor.classList.add('birthday-cursor');
             // Manejar el clic/tap: cambiar a la segunda imagen y animar, luego volver a la primera
             function onCursorAction() {
-                // cambiar imagen y aplicar animación
+                // cambiar imagen y aplicar animación de clic
                 customCursor.src = cursorImg2;
-                customCursor.classList.remove('cursor-animate');
+                customCursor.classList.remove('cursor-click-animate');
                 // reflow para reiniciar la animación si se hace clic rápido
                 void customCursor.offsetWidth;
-                customCursor.classList.add('cursor-animate');
+                customCursor.classList.add('cursor-click-animate');
                 // volver a imagen 1 al finalizar la animación (seguridad con timeout)
                 setTimeout(() => {
                     customCursor.src = cursorImg1;
-                    customCursor.classList.remove('cursor-animate');
+                    customCursor.classList.remove('cursor-click-animate');
                 }, 600);
             }
             document.addEventListener('click', onCursorAction);
